@@ -10,5 +10,6 @@ on:
   - pull_request
             
 jobs:
-  - name: Setup Nox
+  main_test:
+    name: Setup Nox
     uses: daisylb/setup-nox@v2.1.0
