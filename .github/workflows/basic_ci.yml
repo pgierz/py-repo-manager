@@ -12,4 +12,12 @@ on:
 jobs:
   main_test:
     name: Setup Nox
-    uses: daisylb/setup-nox@v2.1.0
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Setup Nox
+        uses: daisylb/setup-nox@v2.1.0
