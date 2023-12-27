@@ -16,10 +16,19 @@ classifiers =
     Programming Language :: Python :: 3.10
 
 [options]
+package_dir = 
+  = src
 packages = find:
-package_dir =
-    = src
 include_package_data = True
+install_requires =
+python_requires = >=3.7, <4
+
+# Entry point
+[options.entry_points]
+console_scripts =
+    py-repo-manager = py_repo_manager.command_line_interface:main
 
 [options.package_data]
-py_repo_manager = data/*
+py_repo_manager = ../data/*
+
+# Put tool configurations in pyproject.toml

@@ -1,0 +1,27 @@
+foo: bar
+collections:
+  - root: "/path/to/root"
+    unallowed_key: "blah"
+    repos:
+      - url: "https://github.com/example/repo1.git"
+        branch: "main"
+        depth: "invalid" # depth should be an integer, but it's a string here
+        dest: "/destination/repo1"
+      - url: "https://github.com/example/repo2.git"
+        branch: "dev"
+        depth: 3
+        dest: null # dest should be a string, but it's null here
+      - url: "https://github.com/example/repo3.git"
+        branch: "feature"
+        depth: 5
+        dest: "/destination/repo3"
+      - url: "https://github.com/example/repo4.git"
+        # This repository misses the 'depth' key
+        dest: "/destination/repo4"
+  - root: "/another/path"
+    repos:
+      - # This repository misses all keys
+      - url: "https://github.com/example/repo5.git"
+  - repos:
+      - url: "/local/path"
+
