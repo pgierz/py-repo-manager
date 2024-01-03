@@ -1,15 +1,18 @@
+import os
 import unittest
 
 import ruamel.yaml
 
 import py_repo_manager.line_column_utils as lc_utils
 
+test_data_path = os.path.join(os.path.dirname(__file__), "test_data/")
+
 yaml = ruamel.yaml.YAML(typ="rt")
 
 
 class TestGetLc(unittest.TestCase):
     def setUp(self):
-        with open("./test_data/input_file.yaml", "r") as f:
+        with open(f"{test_data_path}/input_file.yaml", "r") as f:
             self.input_file = yaml.load(f)
 
     def test_get_lc(self):

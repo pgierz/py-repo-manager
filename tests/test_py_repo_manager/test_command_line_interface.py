@@ -1,8 +1,12 @@
 # Tests for the Click command line interface
 
+import os
+
 from click.testing import CliRunner
 
 from py_repo_manager import command_line_interface
+
+test_data_path = os.path.join(os.path.dirname(__file__), "test_data/")
 
 
 def test_cli():
