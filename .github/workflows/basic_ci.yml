@@ -11,7 +11,7 @@ on:
             
 jobs:
   main_test:
-    name: Setup Nox
+    name: CI Tests
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
@@ -28,5 +28,5 @@ jobs:
         run: pip install pipenv
       - name: Run tests
         run: |
-          pipenv install --dev
+          pipenv install --dev --python ${pythonLocation}/bin/python
           pipenv run pytest
