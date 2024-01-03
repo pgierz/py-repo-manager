@@ -2,7 +2,7 @@
 
 
 import cerberus
-import line_column_utils
+from . import line_column_utils
 import ruamel.yaml
 from loguru import logger
 
@@ -30,3 +30,7 @@ def validate_configuration(config_file: dict, schema: dict = None) -> bool:
             )
             logger.debug(f"{line=}, {column=}, {prefix=}")
         return False
+
+def extract_and_print_schema() -> None:
+    schema = load_schema_from_file("schema.yaml")
+    print(yaml.dump(schema))

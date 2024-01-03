@@ -10,7 +10,6 @@ gitpython = "*"
 click = "*"
 dpath = "*"
 rich = "*"
-py-repo-manager = {file = ".", editable = true}
 loguru = "*"
 
 [dev-packages]
@@ -18,11 +17,11 @@ nox = "*"
 pytest = "*"
 flake8 = "*"
 ipython = "*"
-py-repo-manager = {file = ".", editable = true}
 ipdb = "*"
 isort = "*"
 black = "*"
 flake8-pyproject = "*"
+py-repo-manager = {file = "."}
 
 [requires]
-python_version = "^3.7,<4"
+python_version = ">=3.7,<4"
