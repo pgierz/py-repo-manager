@@ -18,6 +18,9 @@ collections:
       - url: "https://github.com/example/repo4.git"
         # This repository misses the 'depth' key
         dest: "/destination/repo4"
+      - url: "https://github.com/example/repo5.git"
+        dest: null
+        depth: "not an int"
   - root: "/another/path"
     repos:
       - # This repository misses all keys

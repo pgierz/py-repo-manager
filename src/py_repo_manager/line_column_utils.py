@@ -2,10 +2,10 @@ import sys
 from typing import NamedTuple
 
 import dpath.util
-import ruamel.yaml as yaml
+import ruamel
 from loguru import logger
 
-yaml = yaml.YAML(typ="rt")
+yaml = ruamel.yaml.YAML(typ="rt")
 
 data_location = NamedTuple(
     "data_location", [("line", int), ("col", int), ("prefix", str)]
@@ -30,14 +30,19 @@ def get_lc(data, prefix=""):
         )
         logger.debug("Restoring original data without removing prefix")
         data = original_data
-        prefix_minus_last, last = prefix.rsplit(".", 1)
+        if "." in prefix:
+            prefix_minus_last, last = prefix.rsplit(".", 1)
+            data_above = dpath.get(data, prefix_minus_last, separator=".")
+        else:
+            prefix_minus_last, last = "", prefix
+            # ???
+            data_above = data
         logger.debug(f"{prefix_minus_last=}, {last=}")
         if prefix_minus_last.startswith("."):
             # Remove very first dot at beginning of prefix
             prefix_minus_last = prefix_minus_last[1:]
-        data_above = dpath.get(data, prefix_minus_last, separator=".")
         # Check if we have a dict or list:
-        if isinstance(data_above, dict):
+        if isinstance(data_above, ruamel.yaml.comments.CommentedMap):
             try:
                 logger.debug(data_above.lc.key(last))
                 return data_location(
@@ -48,9 +53,12 @@ def get_lc(data, prefix=""):
             except AttributeError:
                 raise AttributeError("Line/column information not available")
             except KeyError:
-                raise KeyError(f"The {prefix=} does not exist in the data")
-        elif isinstance(data_above, list):
+                raise KeyError(
+                    f"The {prefix=} (dict version) does not exist in the data"
+                )
+        elif isinstance(data_above, ruamel.yaml.comments.CommentedSeq):
             try:
+                last = int(last)
                 logger.debug(data_above.lc.item(last))
                 return data_location(
                     line=data_above.lc.item(last)[0],
@@ -60,7 +68,9 @@ def get_lc(data, prefix=""):
             except AttributeError:
                 raise AttributeError("Line/column information not available")
             except KeyError:
-                raise KeyError(f"The {prefix=} does not exist in the data")
+                raise KeyError(
+                    f"The {prefix=} (list version) does not exist in the data"
+                )
         else:
             raise TypeError(
                 f"Data above {prefix=} is not a dict or list, but a {type(data_above)}"
@@ -73,6 +83,8 @@ def get_all_lc(data, prefix=""):
         for key, value in data.items():
             # lc_data[key] = get_lc(data, prefix=f"{prefix}.{key}")
             # Recurse inwards
+            logger.debug(f"Recursing inwards with {key=} and {value=}")
+            logger.debug(f"New prefix will beginning with {prefix}.{key}")
             lc_data[key] = get_all_lc(value, prefix=f"{prefix}.{key}")
     elif isinstance(data, list):
         for index, value in enumerate(data):

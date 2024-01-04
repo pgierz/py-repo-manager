@@ -5,9 +5,11 @@
 """
 
 import importlib.resources as resources
+import io
 import sys
 
 import cerberus
+import rich
 import ruamel.yaml
 from loguru import logger
 
@@ -32,21 +34,72 @@ def load_schema_from_file(file_path: str) -> dict:
         return yaml.load(schema_file)
 
 
-def validate_configuration(config_file: dict, schema: dict = None) -> bool:
+class LineColumnErrorHandler(cerberus.errors.BasicErrorHandler):
+    def __init__(self, *args, **kwargs):
+        self._errors = {}
+        super().__init__(*args, **kwargs)
+
+    def _insert_error(self, path, node):
+        logger.debug(f"Error at path: {path}")
+        logger.debug(f"Error at node: {node}")
+        path_name = ".".join(str(item) for item in tuple(path))
+        if path_name in self._errors:
+            self._errors[path_name].append(node)
+        else:
+            self._errors[path_name] = [node]
+        super()._insert_error(path, node)
+
+    @property
+    def all_errors(self):
+        return self._errors
+
+
+def validate_configuration(
+    config_file: str, schema: dict = None, print_errors=True
+) -> bool:
     schema = schema or get_schema_from_pkg()
-    v = cerberus.Validator(schema)
+    v = cerberus.Validator(schema, error_handler=LineColumnErrorHandler())
 
     with open(config_file, "r") as config:
         cfg = yaml.load(config)
 
-    if v.validate(cfg):
+    is_valid = v.validate(cfg)
+    # Dummy invoke of errors to populate error_handler
+    _ = v.errors
+
+    if is_valid:
         return True
     else:
-        for error in v._errors:
-            line, column, prefix = line_column_utils.get_all_lc(
-                cfg, ".".join(error.document_path)
-            )
-            logger.debug(f"{line=}, {column=}, {prefix=}")
+        if not print_errors:
+            return False
+        errors_at_line = {}
+        for key, value in v.error_handler.all_errors.items():
+            try:
+                lc = line_column_utils.get_lc(cfg, key)
+                errors_at_line[lc.line] = value
+            except KeyError as e:
+                if "required field" in str(value):
+                    if "." in key:
+                        top_key = ".".join(key.rsplit(".", 1)[:-1])
+                        lc = line_column_utils.get_lc(cfg, top_key)
+                        errors_at_line[lc.line] = value
+                else:
+                    raise e
+        yaml_content = io.StringIO()
+        yaml.dump(cfg, yaml_content)
+        yaml_lines = yaml_content.getvalue().splitlines()
+
+        for index, line in enumerate(yaml_lines, start=0):
+            if index in errors_at_line:
+                rich.print(f"[red]{index+1:3d} {line}[/red]")
+                for error in errors_at_line[index]:
+                    rich.print(
+                        rich.panel.Panel.fit(
+                            "[red]" + error, title="[reverse red]Error"
+                        )
+                    )
+            else:
+                rich.print(f"{index+1:3d} {line}")
         return False
 
 
